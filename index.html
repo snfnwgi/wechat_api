@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>登录微信</title>
+    <script src="//cdn.bootcss.com/jquery/1.2.3/jquery.min.js"></script>
+</head>
+<body>
+
+<!--
+<div id="uuid"></div>
+<hr>
+-->
+
+<br>
+<div>当前可托管微信数: <span id="">5</span></div>
+<br>
+<div>当前已托管微信数: <span id="online_num">统计中...</span></div>
+<br>
+<div>等待托管排队中微信数: <span id="wait_num">统计中...</span></div>
+<hr>
+<br>
+<div id="qrcode">正在生成登录二维码...</div>
+
+</body>
+<script>
+    $(function(){
+        var random = new Date().getTime()+Math.ceil(Math.random()*1000);
+        var uuid = '';
+        $("#uuid").html(random);
+
+        var id = window.setInterval(function(){
+            $.getJSON("/weixin_webapi/qrcode.php",{id:random} , function (data) {
+
+                $("#online_num").text(data.online_list_count);
+                $("#wait_num").text(data.wait_list_count);
+
+
+                if (data.status == 0) {
+                    $("#qrcode").text('警告: 微信登录失败或意外退出,请刷新本页面,重新生成登录二维码 ...');
+                    //window.clearInterval(id);
+                }
+
+                if (data.status == 1) {
+                    $("#qrcode").text('第一步, 正在排队中,等待微信被托管 ...');
+                }
+
+                if (data.status == 2) {
+                    $("#qrcode").text('第二步, 正在生成登录二维码 ...');
+                }
+
+                if (data.status >= 4) {
+                    $("#qrcode").text('第三步, 微信托管成功,请关闭本页面 ...');
+                    //window.clearInterval(id);
+                }
+
+                if (data.status == 3) {
+
+                    if (data.uuid != uuid) {
+                        var img_tag = '<img src="saved/'+data.uuid+'.png?r='+Math.random()+'" />';
+                        $("#qrcode").html(img_tag);
+                        uuid = data.uuid;
+                    }
+                }
+            });
+        },1000)
+    });
+
+</script>
+</html>
